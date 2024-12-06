@@ -14,6 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r setup, message=FALSE, warning=FALSE}
 library(sf)
 library(tidyverse)
+library(tmap)
+library(lmtest)
+library(car)
 ```
 
 **Overview:**
@@ -48,71 +51,111 @@ We will start by looking at data for 2020.
 **Question 1** _Create histograms for NDVI, max temp., min temp., rain, and population, and water in 2020 as well as elevation. Based on these graphs, assess the normality of these variables._
 
 ```{r}
-#Code goes here.
+hist(lab6_data$ndvi_20_med)
+hist(lab6_data$maxtemp_20_med)
+hist(lab6_data$mintemp_20_med)
+hist(lab6_data$rain_20_sum)
+hist(lab6_data$pop_20)
 ```
 
-{Your assessment of the variables' normality goes here.}
+None of these variables are normally distributed. NDVI and rainfall are moderately right-skewed, maxtemp and mintemp are moderately left-skewed, and population is extremely heavily right skewed.
 
 **Question 2** _Use tmap to map these same variables using Jenks natural breaks as the classification method. For an extra challenge, use `tmap_arrange` to plot all maps in a single figure._
 
 ```{r}
-
+tm_shape(lab6_data)+
+  tm_polygons("ndvi_20_med", style = "jenks")
+tm_shape(lab6_data)+
+  tm_polygons("maxtemp_20_med", style = "jenks")
+tm_shape(lab6_data)+
+  tm_polygons("mintemp_20_med", style = "jenks")
+tm_shape(lab6_data)+
+  tm_polygons("rain_20_sum", style = "jenks")
+tm_shape(lab6_data)+
+  tm_polygons("pop_20", style = "jenks")
 ```
 
 
 **Question 3** _Based on the maps from question 3, summarise major patterns you see in the spatial distribution of these data from any of your variables of interest. How do they appear to be associated with the NDVI variable?_
 
-{Your response here.}
+NDVI values are highest along the southeast coast and Tasmania and still very high along the northwest, northern, and southwestern coasts NDVI values very low across most of Australia, corresponding to the massive Outback which takes up most of its landmass. Rainfall seems to be strongly correlated to the NDVI values, with the southwestern coast seeming to be an outlier in having low rainfall but high NDVI values. And while most areas with high NDVI values have low population, all areas of high population are found in areas with high NDVI values, while no areas with low NDVI values have a high population. Maxtemp and mintemp are only slightly correlated with NDVI. The primary factor at play there appears to be that northern areas (those closest to the equator) are warmer, with NDVI being correlated with slightly moderated temperatures when comparing across areas at the same latitude.
 
 **Question 4** _Create univariate models for each of the variables listed in question 1, with NDVI in 2020 as the dependent variable. Print a summary of each model. Write a summary of those results that indicates the direction, magnitude, and significance for each model coefficient._
 
 ```{r}
+dependent_var<-"ndvi_20_med"
+independent_vars<-c("maxtemp_20_med", "mintemp_20_med", "rain_20_sum", "pop_20")
 
+models<-list()
+summaries<-list()
+
+for(var in independent_vars){
+  formula<-as.formula(paste(dependent_var, "~", var))
+  
+  model<-lm(formula, data = lab6_data)
+  models[[var]]<-model
+  summaries[[var]]<-summary(model)
+  
+  cat("\nModel for", var, ":\n")
+  print(summaries[[var]])
+}
 ```
 
-{Discussion here}
+The directions and magnitude for each univariate model were shown in the coefficients, better described as the slope of the linear equation. The coefficients for the min and max temperature correlations were negative (-0.012 and -0.013 respectively), while rainfall and population had much smaller positive coefficients (9.124 x 10^-7 and 1.500 x 10^6 respectively). Because NDVI values only range from -1 to 1, these correlations have a larger magnitude than it appears, but they are still relatively small.
+
+The correlation strength for each uni variate model varied widely. The strongest correlation by far was between rainfall and NDVI (Rsq = 0.43), with the weakest being between population and NDVI (Rsq = 0.12). Interestingly, max temp and NDVI had a stronger correlation than min temp and NDVI (Rsq = 0.21 and Rsq = 0.14, respectively). Additionally, all coefficients across all correlations were shown as highly significant as shown by the significance codes.
 
 **Question 5** _Create a multivariate regression model with the variables of interest, choosing EITHER max or min temperature (but not both) You may also choose to leave out any variables that were insignificant in Q4. Use the univariate models as your guide. Call the results._
 
 ```{r}
-#Code goes here
+dependent_var1<-"ndvi_20_med"
+independent_vars1<-c("maxtemp_20_med", "rain_20_sum", "pop_20")
+
+formula1<-as.formula(paste(dependent_var, "~", paste(independent_vars, collapse = " + ")))
+multivar_model<-lm(formula1, data = lab6_data)
+summary(multivar_model)
 ```
 
 **Question 6** _Summarize the results of the multivariate model. What are the direction, magnitude, and significance of each coefficient? How did it change from the univariate models you created in Q4 (if at all)? What do the R2 and F-statistic values tell you about overall model fit?_
 
-{Response goes here}
+The multivariate model shows a positive coefficient for all variables except min temp. However, magnitudes for annual rainfall and population are quite small, with an order of magnitude at or below 10^-6. Magnitudes for max temp and min temp are larger, with magnitues of 10^-3 and 10^-2, respectively. The F-statistic value of 312.1 and the p-value of less than 2.2 x 10^-16 shows that the model is useful, and the R-squared value of 0.64 tells us that about 64% of the variance in the data is explained by our model.
 
 **Question 7** _Use a histogram and a map to assess the normality of residuals and any spatial autocorrelation. Summarise any notable patterns that you see._
 
 ```{r}
-#Code goes here
+residuals<-residuals(multivar_model)
+hist(residuals)
+
+lab6_data<-lab6_data %>%
+  mutate(ndvi_20_med_pred = predict(multivar_model)) %>%
+  mutate(ndvi_20_pred_diff = ndvi_20_med_pred - ndvi_20_med)
+
+tm_shape(lab6_data)+
+  tm_polygons("ndvi_20_pred_diff", style = "jenks")
 ```
 
-{Summary goes here}
+The residuals appear strongly left-skewed. The model seems to underpredict NDVI values along the eastern coast of Australia and in Tasmania, overpredict in clusters of southern and northwestern Australia, and accurately predict in most of the country.
 
 **Question 8** _Assess any issues with multicollinearity or heteroskedastity in this model using the techniques shown in class. Run the appropriate tests and explain what their results show you._
 
 ```{r}
-#Code goes here
+vif(multivar_model)
+bptest(multivar_model)
 ```
 
-{Interpretation goes here}
+The vif test for multicollinearity shows that total rainfall and population should be included in our model, while max temp and min temp should not. This is because the values for the first two variables were below 5, while the values for the other two were far above 5. The Breusch-Pagan test shows a p-value of 2.2 x 10^-16, which is well below the p = 0.05 value required to overturn the null hypothesis that the data are not heteroskedastic. This means we can conclude that the data do not follow constant variance, making our model unreliable.
 
 **Question 9** _How would you summarise the results of this model in a sentence or two? In addition, looking at the full model and your diagnostics, do you feel this is a model that provides meaningful results? Explain your answer._
 
-```{r}
-Discussion here
-```
-
+The results of this model show that max temp and min temp have the highest influence on the NDVI prediction value, but these variables also have vif values well above 5, making them unsuitable for use in our model. Despite this, our model explains about 64% of the variance in the data, with reasonably good predicitions for much of Australia. However, underprediction and overprediction seem to be concentrated in specific areas, begging the question of whether more or different variables are needed to create an accurate model of NDVI values for Australia. Based on this information, I do not think the results of this model are especially meaningful.
 
 **Disclosure of assistance:** _Besides class materials, what other sources of assistance did you use while completing this lab? These can include input from classmates, relevant material identified through web searches (e.g., Stack Overflow), or assistance from ChatGPT or other AI tools. How did these sources support your own learning in completing this lab?_
 
-{Response here.}
+I received help from a friend on questions 7 and 8 concerning concepts, and help from ChatGPT on questions 4 and 5 with debugging.
 
 **Lab reflection:** _How do you feel about the work you did on this lab? Was it easy, moderate, or hard? What were the biggest things you learned by completing it?_
 
-{Discussion here.}
-
+I do not feel confident about my work on this lab, as I was confused by a number of key concepts such as heteroskedacisity, and Breusch-Pagan tests.
 
 **Challenge question**
 
