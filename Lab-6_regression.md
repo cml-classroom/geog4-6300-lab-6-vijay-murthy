@@ -298,7 +298,7 @@ results.*
 dependent_var1<-"ndvi_20_med"
 independent_vars1<-c("maxtemp_20_med", "rain_20_sum", "pop_20")
 
-formula1<-as.formula(paste(dependent_var, "~", paste(independent_vars, collapse = " + ")))
+formula1<-as.formula(paste(dependent_var1, "~", paste(independent_vars1, collapse = " + ")))
 multivar_model<-lm(formula1, data = lab6_data)
 summary(multivar_model)
 ```
@@ -309,21 +309,20 @@ summary(multivar_model)
     ## 
     ## Residuals:
     ##      Min       1Q   Median       3Q      Max 
-    ## -0.51714 -0.02470  0.00657  0.03876  0.25738 
+    ## -0.54167 -0.02238  0.00814  0.03759  0.17686 
     ## 
     ## Coefficients:
     ##                  Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)     2.569e-01  4.219e-02   6.089 1.86e-09 ***
-    ## maxtemp_20_med  7.287e-03  3.026e-03   2.408   0.0163 *  
-    ## mintemp_20_med -2.239e-02  3.459e-03  -6.471 1.81e-10 ***
-    ## rain_20_sum     1.013e-06  3.984e-08  25.418  < 2e-16 ***
-    ## pop_20          2.374e-07  1.052e-07   2.256   0.0244 *  
+    ## (Intercept)     4.922e-01  2.202e-02  22.351  < 2e-16 ***
+    ## maxtemp_20_med -1.179e-02  7.012e-04 -16.812  < 2e-16 ***
+    ## rain_20_sum     8.648e-07  3.357e-08  25.766  < 2e-16 ***
+    ## pop_20          3.024e-07  1.077e-07   2.808  0.00513 ** 
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 0.0848 on 711 degrees of freedom
-    ## Multiple R-squared:  0.6371, Adjusted R-squared:  0.6351 
-    ## F-statistic: 312.1 on 4 and 711 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 0.0872 on 712 degrees of freedom
+    ## Multiple R-squared:  0.6158, Adjusted R-squared:  0.6142 
+    ## F-statistic: 380.4 on 3 and 712 DF,  p-value: < 2.2e-16
 
 **Question 6** *Summarize the results of the multivariate model. What
 are the direction, magnitude, and significance of each coefficient? How
@@ -332,12 +331,11 @@ What do the R2 and F-statistic values tell you about overall model fit?*
 
 The multivariate model shows a positive coefficient for all variables
 except min temp. However, magnitudes for annual rainfall and population
-are quite small, with an order of magnitude at or below 10^-6.
-Magnitudes for max temp and min temp are larger, with magnitues of 10^-3
-and 10^-2, respectively. The F-statistic value of 312.1 and the p-value
-of less than 2.2 x 10^-16 shows that the model is useful, and the
-R-squared value of 0.64 tells us that about 64% of the variance in the
-data is explained by our model.
+are quite small, with an order of magnitude at or below 10^-6. The
+magnitude agnitude of max temp is larger at 10^-3 . The F-statistic
+value of 312.1 and the p-value of less than 2.2 x 10^-16 shows that the
+model is useful, and the R-squared value of 0.64 tells us that about 64%
+of the variance in the data is explained by our model.
 
 **Question 7** *Use a histogram and a map to assess the normality of
 residuals and any spatial autocorrelation. Summarise any notable
@@ -376,8 +374,8 @@ the appropriate tests and explain what their results show you.*
 vif(multivar_model)
 ```
 
-    ## maxtemp_20_med mintemp_20_med    rain_20_sum         pop_20 
-    ##      21.624150      22.045570       1.596303       1.184057
+    ## maxtemp_20_med    rain_20_sum         pop_20 
+    ##       1.098341       1.071548       1.173265
 
 ``` r
 bptest(multivar_model)
@@ -387,32 +385,29 @@ bptest(multivar_model)
     ##  studentized Breusch-Pagan test
     ## 
     ## data:  multivar_model
-    ## BP = 106.96, df = 4, p-value < 2.2e-16
+    ## BP = 65.65, df = 3, p-value = 3.642e-14
 
-The vif test for multicollinearity shows that total rainfall and
-population should be included in our model, while max temp and min temp
-should not. This is because the values for the first two variables were
-below 5, while the values for the other two were far above 5. The
-Breusch-Pagan test shows a p-value of 2.2 x 10^-16, which is well below
-the p = 0.05 value required to overturn the null hypothesis that the
-data are not heteroskedastic. This means we can conclude that the data
-do not follow constant variance, making our model unreliable.
+The vif test for multicollinearity shows that total rainfall,
+population, and max temp should be included in our model. This is
+because these values were below 5, which is the cutoff for significance.
+The Breusch-Pagan test shows a p-value of 3.64 x 10^-14, which is well
+below the p = 0.05 value required to overturn the null hypothesis that
+the data are not heteroskedastic. This means we can conclude that the
+data do not follow constant variance, making our model unreliable.
 
 **Question 9** *How would you summarise the results of this model in a
 sentence or two? In addition, looking at the full model and your
 diagnostics, do you feel this is a model that provides meaningful
 results? Explain your answer.*
 
-The results of this model show that max temp and min temp have the
-highest influence on the NDVI prediction value, but these variables also
-have vif values well above 5, making them unsuitable for use in our
-model. Despite this, our model explains about 64% of the variance in the
-data, with reasonably good predicitions for much of Australia. However,
+Our model explains about 66% of the variance in the data, with
+reasonably good predicitions for much of Australia, and all our
+variables seem to have relevance to our prediction. However,
 underprediction and overprediction seem to be concentrated in specific
 areas, begging the question of whether more or different variables are
 needed to create an accurate model of NDVI values for Australia. Based
-on this information, I do not think the results of this model are
-especially meaningful.
+on this information, I think the results of this model are meaningful
+but in need of improvement via the addition of more variables.
 
 **Disclosure of assistance:** *Besides class materials, what other
 sources of assistance did you use while completing this lab? These can

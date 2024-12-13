@@ -111,14 +111,14 @@ The correlation strength for each uni variate model varied widely. The strongest
 dependent_var1<-"ndvi_20_med"
 independent_vars1<-c("maxtemp_20_med", "rain_20_sum", "pop_20")
 
-formula1<-as.formula(paste(dependent_var, "~", paste(independent_vars, collapse = " + ")))
+formula1<-as.formula(paste(dependent_var1, "~", paste(independent_vars1, collapse = " + ")))
 multivar_model<-lm(formula1, data = lab6_data)
 summary(multivar_model)
 ```
 
 **Question 6** _Summarize the results of the multivariate model. What are the direction, magnitude, and significance of each coefficient? How did it change from the univariate models you created in Q4 (if at all)? What do the R2 and F-statistic values tell you about overall model fit?_
 
-The multivariate model shows a positive coefficient for all variables except min temp. However, magnitudes for annual rainfall and population are quite small, with an order of magnitude at or below 10^-6. Magnitudes for max temp and min temp are larger, with magnitues of 10^-3 and 10^-2, respectively. The F-statistic value of 312.1 and the p-value of less than 2.2 x 10^-16 shows that the model is useful, and the R-squared value of 0.64 tells us that about 64% of the variance in the data is explained by our model.
+The multivariate model shows a positive coefficient for all variables except min temp. However, magnitudes for annual rainfall and population are quite small, with an order of magnitude at or below 10^-6. The magnitude agnitude of max temp is larger at 10^-3 . The F-statistic value of 312.1 and the p-value of less than 2.2 x 10^-16 shows that the model is useful, and the R-squared value of 0.64 tells us that about 64% of the variance in the data is explained by our model.
 
 **Question 7** _Use a histogram and a map to assess the normality of residuals and any spatial autocorrelation. Summarise any notable patterns that you see._
 
@@ -143,11 +143,11 @@ vif(multivar_model)
 bptest(multivar_model)
 ```
 
-The vif test for multicollinearity shows that total rainfall and population should be included in our model, while max temp and min temp should not. This is because the values for the first two variables were below 5, while the values for the other two were far above 5. The Breusch-Pagan test shows a p-value of 2.2 x 10^-16, which is well below the p = 0.05 value required to overturn the null hypothesis that the data are not heteroskedastic. This means we can conclude that the data do not follow constant variance, making our model unreliable.
+The vif test for multicollinearity shows that total rainfall, population, and max temp should be included in our model. This is because these values were below 5, which is the cutoff for significance. The Breusch-Pagan test shows a p-value of 3.64 x 10^-14, which is well below the p = 0.05 value required to overturn the null hypothesis that the data are not heteroskedastic. This means we can conclude that the data do not follow constant variance, making our model unreliable.
 
 **Question 9** _How would you summarise the results of this model in a sentence or two? In addition, looking at the full model and your diagnostics, do you feel this is a model that provides meaningful results? Explain your answer._
 
-The results of this model show that max temp and min temp have the highest influence on the NDVI prediction value, but these variables also have vif values well above 5, making them unsuitable for use in our model. Despite this, our model explains about 64% of the variance in the data, with reasonably good predicitions for much of Australia. However, underprediction and overprediction seem to be concentrated in specific areas, begging the question of whether more or different variables are needed to create an accurate model of NDVI values for Australia. Based on this information, I do not think the results of this model are especially meaningful.
+Our model explains about 66% of the variance in the data, with reasonably good predicitions for much of Australia, and all our variables seem to have relevance to our prediction. However, underprediction and overprediction seem to be concentrated in specific areas, begging the question of whether more or different variables are needed to create an accurate model of NDVI values for Australia. Based on this information, I think the results of this model are meaningful but in need of improvement via the addition of more variables.
 
 **Disclosure of assistance:** _Besides class materials, what other sources of assistance did you use while completing this lab? These can include input from classmates, relevant material identified through web searches (e.g., Stack Overflow), or assistance from ChatGPT or other AI tools. How did these sources support your own learning in completing this lab?_
 
